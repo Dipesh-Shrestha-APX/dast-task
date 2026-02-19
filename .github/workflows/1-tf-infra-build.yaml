@@ -28,7 +28,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }} # Fixed variable syntax
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
         run: terraform -chdir=terraform init
@@ -48,10 +48,9 @@ jobs:
           echo "DAST_S3_BUCKET=$S3_NAME" >> $GITHUB_ENV
 
       - name: Update GitHub Secrets
-        uses: peter-evans/create-or-update-secret@v4
+        uses: peter-evans/create-or-update-secret@v5
         with:
-          # If GITHUB_TOKEN fails, replace with ${{ secrets.YOUR_PAT }}
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          token: ${{ secrets.GH_PAT }}
           repository: ${{ github.repository }}
           data: |
             EC2_PUBLIC_IP=${{ env.EC2_PUBLIC_IP }}
