@@ -5,19 +5,23 @@ resource "aws_security_group" "ssh_http" {
   name        = "ssh_http_sg"
   description = "Allow SSH and Juice Shop access"
 
+  # SSH
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  # allow from anywhere so that Ansible can config it
+  }
 
+  # Juice Shop (Port 3000)
   ingress {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]     # Juice Shop accessible for ZAP to zap it up
+    cidr_blocks = ["0.0.0.0/0"]  # Juice Shop accessible for ZAP
   }
 
+  # Outbound
   egress {
     from_port   = 0
     to_port     = 0
@@ -30,9 +34,9 @@ resource "aws_security_group" "ssh_http" {
 # EC2 Instance
 # ------------------------
 resource "aws_instance" "dast_ec2" {
-  ami           = "ami-0c2b8ca1dad447f8a"  # Amazon Linux 2023
-  instance_type = var.instance_type
-  key_name      = var.key_name
+  ami             = "ami-0c2b8ca1dad447f8a"  # Amazon Linux 2023
+  instance_type   = var.instance_type
+  key_name        = var.key_name
   security_groups = [aws_security_group.ssh_http.name]
 
   tags = {
@@ -44,33 +48,21 @@ resource "aws_instance" "dast_ec2" {
 # S3 Bucket (TF state + DAST reports)
 # ------------------------
 resource "aws_s3_bucket" "dast_bucket" {
-  bucket = "dast-s3-123456789"  # same bucket for state and reports
-  acl    = "private"
+  bucket = "dast-s3-123456789"  # must be globally unique
+}
 
-  versioning {
-    enabled = true
+# Enable versioning (new syntax for AWS provider v5+)
+resource "aws_s3_bucket_versioning" "dast_bucket_versioning" {
+  bucket = aws_s3_bucket.dast_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_object" "dast_report_placeholder" {
+# Optional placeholder object
+resource "aws_s3_object" "dast_report_placeholder" {
   bucket = aws_s3_bucket.dast_bucket.id
-  key    = "dast-reports/.keep"  # optional placeholder folder
+  key    = "dast-reports/.keep"
+  content = ""
 }
-
-# # ------------------------
-# # GitHub Secret: S3 Bucket
-# # ------------------------
-# resource "github_actions_secret" "dast_s3_bucket" {
-#   repository      = var.github_repo_name
-#   secret_name     = "DAST_S3_BUCKET"
-#   plaintext_value = aws_s3_bucket.dast_bucket.bucket
-# }
-
-# # ------------------------
-# # GitHub Secret: EC2 Public IP
-# # ------------------------
-# resource "github_actions_secret" "dast_ec2_ip" {
-#   repository      = var.github_repo_name
-#   secret_name     = "EC2_PUBLIC_IP"
-#   plaintext_value = aws_instance.dast_ec2.public_ip
-# }
