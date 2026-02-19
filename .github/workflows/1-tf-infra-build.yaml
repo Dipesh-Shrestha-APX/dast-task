@@ -47,11 +47,11 @@ jobs:
           echo "EC2_PUBLIC_IP=$EC2_IP" >> $GITHUB_ENV
           echo "DAST_S3_BUCKET=$S3_NAME" >> $GITHUB_ENV
 
-      - name: Update Secrets
-        uses: peter-evans/create-or-update-secret@v5
-        with:
-          token: ${{ secrets.GH_PAT }}
-          repository: ${{ github.repository }}
-          data: |
-            EC2_PUBLIC_IP=${{ env.EC2_PUBLIC_IP }}
-            DAST_S3_BUCKET=${{ env.DAST_S3_BUCKET }}
+      - name: Update GitHub Secrets via CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }} # You still need your PAT here
+          EC2_IP: ${{ env.EC2_PUBLIC_IP }}
+          S3_BUCKET: ${{ env.DAST_S3_BUCKET }}
+        run: |
+          gh secret set EC2_PUBLIC_IP --body "$EC2_IP"
+          gh secret set DAST_S3_BUCKET --body "$S3_BUCKET"
