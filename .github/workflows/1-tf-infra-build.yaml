@@ -3,6 +3,10 @@ name: 1 Terraform Deploy DAST Infrastructure
 on:
   workflow_dispatch:  # manual trigger
 
+permissions:
+  contents: read       # needed to read repo code
+  secrets: write       # needed to create/update secrets
+
 jobs:
   terraform_provision:
     name: Terraform Provision
@@ -17,7 +21,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.7.7  # your desired version
+          terraform_version: 1.7.7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
