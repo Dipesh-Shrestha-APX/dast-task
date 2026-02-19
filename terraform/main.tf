@@ -5,17 +5,17 @@ resource "aws_security_group" "ssh_http" {
   name        = "ssh_http_sg"
   description = "Allow SSH and Juice Shop access"
 
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]  # allow from anywhere
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # allow from anywhere so that Ansible can config it
 
   ingress {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]     # Juice Shop accessible for ZAP
+    cidr_blocks = ["0.0.0.0/0"]     # Juice Shop accessible for ZAP to zap it up
   }
 
   egress {
