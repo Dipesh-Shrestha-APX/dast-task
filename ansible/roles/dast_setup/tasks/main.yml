@@ -1,0 +1,25 @@
+---
+- name: Install Docker
+  ansible.builtin.package:
+    name: docker
+    state: present
+
+- name: Start Docker service
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Pull Juice Shop Docker image
+  ansible.builtin.docker_image:
+    name: "{{ juice_shop_image }}"
+    source: pull
+
+- name: Run Juice Shop container
+  ansible.builtin.docker_container:
+    name: juice-shop
+    image: "{{ juice_shop_image }}"
+    state: started
+    restart_policy: unless-stopped
+    published_ports:
+      - "3000:3000"

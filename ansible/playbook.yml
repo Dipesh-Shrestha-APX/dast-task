@@ -1,0 +1,8 @@
+---
+- name: Configure Juice Shop on DAST EC2
+  hosts: juiceshop
+  become: true
+  vars_files:
+    - roles/dast_setup/vars/main.yml
+  roles:
+    - dast_setup

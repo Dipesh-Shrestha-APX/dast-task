@@ -1,0 +1,60 @@
+name: DAST Scan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_URL: http://${{ secrets.EC2_PUBLIC_IP }}:3000
+      AWS_REGION: us-east-1
+      S3_BUCKET: ${{ secrets.DAST_S3_BUCKET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Pull ZAP Docker image
+        run: docker pull zaproxy/zap-stable
+
+      - name: Set timestamped report names
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          echo "BASELINE_REPORT=zap_baseline_$TIMESTAMP.html" >> $GITHUB_ENV
+          echo "FULL_REPORT=zap_full_$TIMESTAMP.html" >> $GITHUB_ENV
+
+      - name: Run baseline scan
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk:rw \
+            zaproxy/zap-stable zap-baseline.py \
+            -t $TARGET_URL -r $BASELINE_REPORT
+
+      - name: Run full scan
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/zap/wrk:rw \
+            zaproxy/zap-stable zap-full-scan.py \
+            -t $TARGET_URL -r $FULL_REPORT
+
+      - name: Upload reports as workflow artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-reports
+          path: |
+            ${{ github.workspace }}/$BASELINE_REPORT
+            ${{ github.workspace }}/$FULL_REPORT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: $AWS_REGION
+
+      - name: Upload reports to S3
+        run: |
+          aws s3 cp $BASELINE_REPORT s3://$S3_BUCKET/dast-reports/baseline/$BASELINE_REPORT
+          aws s3 cp $FULL_REPORT s3://$S3_BUCKET/dast-reports/full/$FULL_REPORT

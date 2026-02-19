@@ -1,0 +1,64 @@
+name: Terraform Deploy DAST Infrastructure
+
+on:
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  terraform_provision:
+    name: Terraform Provision
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.7  # your desired version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: $AWS_REGION
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan
+        run: terraform -chdir=terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform -chdir=terraform apply -auto-approve tfplan
+
+      # -------------------------
+      # Set outputs to GitHub env
+      # -------------------------
+      - name: Output Terraform values
+        id: tf_outputs
+        run: |
+          EC2_IP=$(terraform -chdir=terraform output -raw dast_ec2_public_ip)
+          S3_NAME=$(terraform -chdir=terraform output -raw dast_bucket_name)
+          echo "EC2_PUBLIC_IP=$EC2_IP" >> $GITHUB_ENV
+          echo "DAST_S3_BUCKET=$S3_NAME" >> $GITHUB_ENV
+
+      # -------------------------
+      # Create GitHub secrets
+      # -------------------------
+      - name: Create GitHub secret for EC2 IP
+        uses: peter-evans/create-or-update-secret@v4
+        with:
+          repository: ${{ github.repository }}
+          secret-name: EC2_PUBLIC_IP
+          secret-value: ${{ env.EC2_PUBLIC_IP }}
+
+      - name: Create GitHub secret for DAST S3 Bucket
+        uses: peter-evans/create-or-update-secret@v4
+        with:
+          repository: ${{ github.repository }}
+          secret-name: DAST_S3_BUCKET
+          secret-value: ${{ env.DAST_S3_BUCKET }}

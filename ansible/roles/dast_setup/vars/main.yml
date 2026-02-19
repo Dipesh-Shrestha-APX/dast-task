@@ -1,0 +1,3 @@
+---
+juice_shop_image: "bkimminich/juice-shop"
+s3_bucket: "{{ s3_bucket | default('') }}"

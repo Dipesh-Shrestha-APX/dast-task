@@ -1,0 +1,31 @@
+name: Configure DAST EC2 with Ansible
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ansible_config:
+    runs-on: ubuntu-latest
+    env:
+      EC2_IP: ${{ secrets.EC2_PUBLIC_IP }}
+      S3_BUCKET: ${{ secrets.DAST_S3_BUCKET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Ansible & dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ansible sshpass docker.io
+
+      - name: Decode and save SSH private key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+            --extra-vars "target_ip=$EC2_IP s3_bucket=$S3_BUCKET"
