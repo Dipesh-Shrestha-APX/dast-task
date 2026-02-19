@@ -6,8 +6,8 @@ on:
 # Top-level permissions for secrets creation
 permissions:
   contents: read
-  secrets: write
-
+  actions: write  # This is the correct scope for managing secrets/variables
+  
 jobs:
   terraform_provision:
     name: Terraform Provision
