@@ -16,10 +16,9 @@ jobs:
 
       - name: Install Ansible & dependencies
         run: |
-          # Fix the Ubuntu 24.04 containerd conflict
-          sudo apt-get remove -y containerd || true
           sudo apt-get update
-          sudo apt-get install -y ansible sshpass docker.io
+          # We only install ansible. docker and sshpass are usually pre-installed.
+          sudo apt-get install -y ansible
 
       - name: Decode and save SSH private key
         run: |
