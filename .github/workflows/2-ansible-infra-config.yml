@@ -12,20 +12,27 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Updated to v4
 
       - name: Install Ansible & dependencies
         run: |
-          sudo apt update
-          sudo apt install -y ansible sshpass docker.io
+          # Fix the Ubuntu 24.04 containerd conflict
+          sudo apt-get remove -y containerd || true
+          sudo apt-get update
+          sudo apt-get install -y ansible sshpass docker.io
 
       - name: Decode and save SSH private key
         run: |
           mkdir -p ~/.ssh
+          # Ensure your secret is the Base64 string of the .pem file
           echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 --decode > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Run Ansible Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False" # Prevents "Unknown Host" prompts
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
-            --extra-vars "target_ip=$EC2_IP s3_bucket=$S3_BUCKET"
+            --extra-vars "target_ip=$EC2_IP \
+                          s3_bucket=$S3_BUCKET \
+                          ansible_ssh_private_key_file=~/.ssh/id_rsa"
