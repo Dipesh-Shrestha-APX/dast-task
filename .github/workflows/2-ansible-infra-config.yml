@@ -1,4 +1,4 @@
-name: Configure DAST EC2 with Ansible
+name: 2 Configure DAST EC2 with Ansible
 
 on:
   workflow_dispatch:

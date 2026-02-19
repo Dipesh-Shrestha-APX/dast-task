@@ -1,4 +1,4 @@
-name: Terraform Deploy DAST Infrastructure
+name: 1 Terraform Deploy DAST Infrastructure
 
 on:
   workflow_dispatch:  # manual trigger
