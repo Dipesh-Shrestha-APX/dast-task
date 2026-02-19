@@ -5,12 +5,11 @@ resource "aws_security_group" "ssh_http" {
   name        = "ssh_http_sg"
   description = "Allow SSH and Juice Shop access"
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["<YOUR_IP>/32"]  # restrict SSH to your IP
-  }
+#   ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]  # allow from anywhere
 
   ingress {
     from_port   = 3000
